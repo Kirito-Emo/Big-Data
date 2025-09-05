@@ -7,7 +7,7 @@ USER root
 
 # install dev tools
 RUN apt-get update
-RUN apt-get install -y curl tar sudo openssh-server rsync openjdk-8-jre-headless vim net-tools
+RUN apt-get install -y curl tar sudo openssh-server rsync openjdk-8-jdk-headless vim net-tools
 
 # passwordless ssh
 RUN ssh-keygen -q -N "" -t rsa -f /root/.ssh/id_rsa 
