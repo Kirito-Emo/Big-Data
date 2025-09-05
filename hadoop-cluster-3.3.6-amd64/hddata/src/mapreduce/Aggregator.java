@@ -41,12 +41,13 @@ public class Mapper1 extends Mapper<LongWritable, Text, Text, Text>
         {
             volume = Integer.parseInt(volumes);
         }
-        catch (Exception ignored) {}
+        catch (Exception ex) {}
+
         try
         {
             price  = Integer.parseInt(prices);
         }
-        catch (Exception ignored) {}
+        catch (Exception ex) {}
 
         int isHigh = "high".equalsIgnoreCase(cls) ? 1 : 0;
 

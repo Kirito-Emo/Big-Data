@@ -30,7 +30,7 @@ public class Mapper2 extends Mapper<LongWritable, Text, Text, IntWritable>
         {
             sumVolume = Integer.parseInt(p[1]);
         }
-        catch (Exception ignored) {}
+        catch (Exception ex) {}
 
         outKey.set(region);
         outVal.set(sumVolume);
