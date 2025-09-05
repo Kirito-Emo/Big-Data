@@ -29,6 +29,12 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
  */
 public class DriverBMWSales
 {
+    /**
+     * Chains Job 1 -> Job 2 -> Job 3, wiring outputs and passing configuration for the final step.
+     *
+     * @param args  CLI arguments: input, out_1, out_2, out_3, [topK]
+     * @throws Exception if job submission or execution fails
+     */
     public static void main(String[] args) throws Exception
     {
         if (args.length < 4)
@@ -49,7 +55,7 @@ public class DriverBMWSales
         j1.setJobName("BMW - Region/Model Aggregate");
         j1.setJarByClass(DriverBMWSales.class);
         j1.setMapperClass(Mapper1.class);
-        j1.setCombinerClass(Combiner1.class);
+        j1.setCombinerClass(Combiner1.class); // combines component-wise sums to reduce shuffle
         j1.setReducerClass(Reducer1.class);
 
         j1.setMapOutputKeyClass(Text.class);
@@ -88,8 +94,8 @@ public class DriverBMWSales
 
         // ---- Job 3 ----
         Configuration c3 = new Configuration();
-        c3.setInt("top.k", topK);
-        c3.set("step2.totals.path", o2);
+        c3.setInt("top.k", topK);           // how many rows to emit per region
+        c3.set("step2.totals.path", o2);    // where Mapper3 will load region totals from
 
         Job j3 = Job.getInstance(c3);
         j3.setJobName("BMW - Top-K per Region");
@@ -107,7 +113,7 @@ public class DriverBMWSales
         TextInputFormat.addInputPath(j3, new Path(o1));
         TextOutputFormat.setOutputPath(j3, new Path(o3));
         j3.setNumReduceTasks(1);
-        if(j3.waitForCompletion(true))
+        if(!j3.waitForCompletion(true))
             System.exit(3);
     }
 }

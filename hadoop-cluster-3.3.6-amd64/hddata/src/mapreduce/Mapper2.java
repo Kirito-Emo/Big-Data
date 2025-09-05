@@ -30,6 +30,16 @@ public class Mapper2 extends Mapper<LongWritable, Text, Text, IntWritable>
     private final Text outKey = new Text();
     private final IntWritable outVal = new IntWritable();
 
+    /**
+     * Reads a Job 1 output line, extracts the region and its volume,
+     * and emits (region, sumVolume).
+     *
+     * @param key       byte offset of the line in the input split (unused)
+     * @param value     a line in the format "region \t model \t count|sumVolume|sumPrice|highCount"
+     * @param ctx       Hadoop context used to emit key/value pairs
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Override
     protected void map(LongWritable key, Text value, Context ctx) throws IOException, InterruptedException
     {
@@ -49,6 +59,12 @@ public class Mapper2 extends Mapper<LongWritable, Text, Text, IntWritable>
         ctx.write(outKey, outVal);
     }
 
+    /**
+     * Parses a string as integer with fallback to 0.
+     *
+     * @param s string to parse
+     * @return integer value or 0 if parsing fails
+     */
     private int safeInt(String s)
     {
         try

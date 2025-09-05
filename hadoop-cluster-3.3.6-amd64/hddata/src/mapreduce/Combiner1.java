@@ -28,6 +28,16 @@ public class Combiner1 extends Reducer<Text, Text, Text, Text>
 {
     private final Text outVal = new Text();
 
+    /**
+     * Sums all four components of the payload and emits the same key with
+     * the aggregated value.
+     *
+     * @param key    "region\tmodel"
+     * @param values iterable of "c|vol|prc|hi" partial sums
+     * @param ctx    Hadoop context
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Override
     protected void reduce(Text key, Iterable<Text> values, Context ctx) throws IOException, InterruptedException
     {
@@ -48,6 +58,12 @@ public class Combiner1 extends Reducer<Text, Text, Text, Text>
         ctx.write(key, outVal);
     }
 
+    /**
+     * Parses a string as integer with fallback to 0.
+     *
+     * @param s string to parse
+     * @return integer value or 0 if parsing fails
+     */
     private int safeInt(String s)
     {
         try

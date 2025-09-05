@@ -28,6 +28,15 @@ public class Reducer2 extends Reducer<Text, IntWritable, Text, IntWritable>
 {
     private final IntWritable outVal = new IntWritable();
 
+    /**
+     * Sums all volumes for the given region and emits the total.
+     *
+     * @param region region name
+     * @param vals   iterable of partial volumes
+     * @param ctx    Hadoop context
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Override
     protected void reduce(Text region, Iterable<IntWritable> vals, Context ctx) throws IOException, InterruptedException
     {

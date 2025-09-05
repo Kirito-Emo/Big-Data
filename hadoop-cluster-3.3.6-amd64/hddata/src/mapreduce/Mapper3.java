@@ -36,13 +36,19 @@ public class Mapper3 extends Mapper<LongWritable, Text, Text, Text>
     private final Text outKey = new Text();
     private final Text outVal = new Text();
 
+    /**
+     * Loads region totals from the output of Job 2.
+     *
+     * @param ctx   Hadoop mapper context used to access configuration and filesystem
+     * @throws IOException if reading the totals fails
+     */
     @Override
     protected void setup(Context ctx) throws IOException
     {
         Configuration conf = ctx.getConfiguration();
         String totalsPath = conf.get("step2.totals.path");
         if (totalsPath == null)
-            return;
+            return; // No totals available; shares will be 0
 
         FileSystem fs = FileSystem.get(conf);
         Path dir = new Path(totalsPath);
@@ -58,6 +64,7 @@ public class Mapper3 extends Mapper<LongWritable, Text, Text, Text>
             {
                 String line;
 
+                // Each line: region \t regionTotalVolume
                 while ((line = br.readLine()) != null)
                 {
                     String[] kv = line.split("\\t");
@@ -67,13 +74,22 @@ public class Mapper3 extends Mapper<LongWritable, Text, Text, Text>
                         {
                             regionTotals.put(kv[0], Integer.parseInt(kv[1]));
                         }
-                        catch (Exception ignore) {}
+                        catch (Exception ex) {} // Ignore malformed totals; acts as if region had no total
                     }
                 }
             }
         }
     }
 
+    /**
+     * Computes per-model metrics and emits (region, "model\t...metrics...").
+     *
+     * @param key       byte offset of the line in the input split (unused)
+     * @param value     a line in the format "region \t model \t count|sumVolume|sumPrice|highCount"
+     * @param ctx       Hadoop context used to emit key/value pairs
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Override
     protected void map(LongWritable key, Text value, Context ctx) throws IOException, InterruptedException
     {
@@ -108,6 +124,12 @@ public class Mapper3 extends Mapper<LongWritable, Text, Text, Text>
         ctx.write(outKey, outVal);
     }
 
+    /**
+     * Parses a string as integer with fallback to 0.
+     *
+     * @param s string to parse
+     * @return integer value or 0 if parsing fails
+     */
     private int safeInt(String s)
     {
         try
