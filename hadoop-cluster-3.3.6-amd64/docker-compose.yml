@@ -1,0 +1,43 @@
+services:
+  master:
+    image: hadoop-new
+    ports:
+      - "9870:9870"
+      - "8088:8088"
+    volumes:
+      - "./hddata:/data"
+    networks:
+      - hadoop_network
+    container_name: master
+    stdin_open: true
+    tty: true
+  slave1:
+    image: hadoop-new
+    ports:
+      - "9864:9864"
+    networks:
+      - hadoop_network
+    container_name: slave1
+    stdin_open: true
+    tty: true
+  slave2:
+    image: hadoop-new
+    ports:
+      - "9863:9864"
+    networks:
+      - hadoop_network
+    container_name: slave2
+    stdin_open: true
+    tty: true
+  slave3:
+    image: hadoop-new
+    ports:
+      - "9862:9864"
+    networks:
+      - hadoop_network
+    container_name: slave3
+    stdin_open: true
+    tty: true
+networks:
+  hadoop_network:
+    driver: bridge
