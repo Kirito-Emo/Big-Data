@@ -6,7 +6,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
-// Mapper for (region\tmodel) -> "1|volume|price|isHigh"
+// Mapper result: (region \t model) -> "1|volume|price|isHigh"
 public class Mapper1 extends Mapper<LongWritable, Text, Text, Text>
 {
     private Text outKey = new Text();
@@ -95,7 +95,7 @@ public class Combiner1 extends Reducer<Text, Text, Text, Text> {
     }
 }
 
-// Reducer to make final aggregation per (region,model)
+// Reducer to make final aggregation per (region \t model)
 public class Reducer1 extends Reducer<Text, Text, Text, Text>
 {
     private Text outVal = new Text();
@@ -117,7 +117,7 @@ public class Reducer1 extends Reducer<Text, Text, Text, Text>
         }
 
         // Output format for Counter:
-        // key = "region\tmodel", value = "count|sumVolume|sumPrice|highCount"
+        // key = "region \t model", value = "count|sumVolume|sumPrice|highCount"
         outVal.set(c + "|" + vol + "|" + prc + "|" + hi);
         ctx.write(key, outVal);
     }
