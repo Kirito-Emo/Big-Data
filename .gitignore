@@ -2,3 +2,4 @@
 .idea
 hadoop-cluster-3.3.6-amd64/hddata/build
 hadoop-cluster-3.3.6-amd64/hddata/bmw_out*/_SUCCESS
+/hadoop-cluster-3.3.6-amd64/hddata/bmw_spark/build/
