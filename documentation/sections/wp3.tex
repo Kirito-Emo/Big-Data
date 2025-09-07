@@ -1,0 +1,36 @@
+\chapter{Esercizio 2 -- Spark}
+	Il secondo esercizio prevede la realizzazione di un programma in \textbf{Apache Spark} che, per ogni gruppo di età (derivato dall’anno di produzione), individui il modello di automobile BMW più venduto.
+	L’implementazione è stata sviluppata in Java, utilizzando le \texttt{RDD API} di Spark e le principali trasformazioni funzionali (\texttt{map}, \texttt{filter}, \texttt{reduceByKey}, \texttt{mapToPair}).
+	
+	\section{Obiettivo}
+		L’obiettivo è quello di determinare, per ciascun intervallo temporale, il modello con il volume di vendite complessivo più alto.
+		Gli intervalli sono stati definiti mediante un processo di \textbf{bucketing} sugli anni di produzione:
+		
+		\begin{itemize}
+			\item \texttt{age<=2014}: veicoli prodotti fino al 2014;
+			\item \texttt{2015\_2018}: veicoli prodotti dal 2015 al 2018;
+			\item \texttt{2019\_2021}: veicoli prodotti dal 2019 al 2021;
+			\item \texttt{>=2022}: veicoli prodotti dal 2022 in poi.
+		\end{itemize}
+	
+	\section{Workflow}
+		Il driver \texttt{SparkDriver} implementa la seguente sequenza di trasformazioni:
+		
+		\begin{enumerate}
+			\item \textbf{Caricamento dati}: i dati vengono letti da file CSV con l’operazione \texttt{textFile}.
+			Le righe vuote o di intestazione vengono filtrate.
+			
+			\item \textbf{Creazione coppie chiave/valore}: ciascuna riga viene trasformata in una coppia \texttt{((ageGroup, model), volume)}.
+			Qui \texttt{ageGroup} è derivato dall’anno tramite la funzione di bucketing, mentre \texttt{volume} è estratto dal campo \texttt{Sales\_Volume}.
+			
+			\item \textbf{Aggregazione dei volumi}: le coppie vengono aggregate con \texttt{reduceByKey}, ottenendo il volume totale per ciascuna coppia \texttt{(ageGroup, model)}.
+			
+			\item \textbf{Ristrutturazione}: i dati vengono rimappati nel formato \texttt{(ageGroup, (model, totalVolume))}.
+			
+			\item \textbf{Selezione del massimo}: per ogni \texttt{ageGroup} viene selezionato il modello con il \texttt{totalVolume} più alto, utilizzando una riduzione che mantiene l’elemento massimo.
+			
+			\item \textbf{Output}: i risultati vengono salvati in file di testo con formato
+			\[
+				\texttt{ageGroup \quad model \quad totalVolume}
+			\]
+		\end{enumerate}

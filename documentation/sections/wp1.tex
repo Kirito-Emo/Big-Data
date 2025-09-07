@@ -1,0 +1,46 @@
+\chapter{Introduzione}
+	
+	\section{Obiettivo}
+		Il progetto ha come obiettivo l’analisi di un dataset reale attraverso l’utilizzo di due diversi framework distribuiti: \textbf{Apache Hadoop MapReduce} e \textbf{Apache Spark}. \\
+		La traccia prevede infatti due esercizi distinti:
+		
+		\begin{enumerate}
+			\item \textbf{Hadoop MapReduce} (Esercizio 1) -- realizzare un programma che analizzi i dati del dataset (statistiche, classifiche, indici, ecc.) mediante almeno tre trasformazioni;
+			\item \textbf{Apache Spark} (Esercizio 2) -- sviluppare un’applicazione che, per ogni gruppo di età, individui il modello di auto BMW più venduto.
+		\end{enumerate}
+	
+	\section{Dataset}
+		Il dataset fornito, denominato \texttt{BMW\_Car\_Sales\_Classification.csv}, contiene informazioni relative a clienti e iniziative di marketing, con l’obiettivo di analizzare i fattori che influenzano la vendita di automobili BMW. \\
+		I campi principali includono:
+		
+		\begin{itemize}
+			\item \texttt{Model}: modello specifico della vettura (es. 5 Series, i8, X3, ecc.);
+			\item \texttt{Year}: anno di produzione;
+			\item \texttt{Region}: area geografica di riferimento (Asia, North America, Middle East, ecc.);
+			\item \texttt{Color}: colore della vettura;
+			\item \texttt{Fuel\_Type}: tipologia di carburante (Petrol, Diesel, Hybrid, ecc.);
+			\item \texttt{Transmission}: tipo di trasmissione (Manual, Automatic);
+			\item \texttt{Engine\_Size\_L}: cilindrata del motore espressa in litri;
+			\item \texttt{Mileage\_KM}: chilometraggio percorso (in kilometri);
+			\item \texttt{Price\_USD}: prezzo dell’auto (in dollari americani);
+			\item \texttt{Sales\_Volume}: volume di vendite registrato;
+			\item \texttt{Sales\_Classification}: classificazione qualitativa delle vendite (\texttt{High} \/ \texttt{Low}).
+		\end{itemize}
+		
+		Il file è in formato CSV con separatore di campo "\texttt{,}" (\textit{comma}). Per l'elaborazione, il job Hadoop e il job Spark ignorano la prima riga (\textit{header}).
+	
+	\section{Docker Environment}
+		Per l’esecuzione del progetto è stato predisposto un ambiente distribuito tramite \textbf{Docker}, che consente di replicare un cluster Hadoop (v. 3.3.6) in locale. \\
+		La configurazione si compone di:
+		
+		\begin{itemize}
+			\item \textbf{Dockerfile}: definisce l’immagine base (\texttt{Ubuntu}) e installa i pacchetti necessari (\texttt{Java 8}, \texttt{Hadoop 3.3.6} e \texttt{OpenSSH} per la comunicazione interna);
+			\item \textbf{docker-compose.yml}: avvia un cluster Hadoop minimale con un container \texttt{master} e tre container \texttt{slave}, collegati in una rete bridge interna (\texttt{hadoop\_network}). Il master espone le porte 9870 (NameNode UI) e 8088 (YARN UI).
+			\item \textbf{config/bootstrap.sh}: script di avvio nel container, che abilita SSH e può (se decommentato) lanciare \texttt{start-dfs.sh}.
+			\item \textbf{config/hadoop-env.sh}: file di configurazione che definisce la variabile \texttt{JAVA\_HOME}.
+			\item \textbf{core-site.xml}: specifica la configurazione principale di Hadoop, inclusa la proprietà \texttt{fs.defaultFS}, ovvero l'URI del NameNode (\texttt{hdfs://master:54310}).
+			\item \textbf{hddata/}: volume montato dal \texttt{docker-compose}, condiviso tra host e container come \texttt{/data}. Contiene dataset, sorgenti compilati, file JAR e output dei job.
+		\end{itemize}
+		
+		All'interno del container \texttt{master}, l'utente può accedere a \texttt{/data} e da lì compilare ed eseguire i programmi Java. I file caricati su HDFS sono gestiti tramite i comandi \texttt{hdfs dfs -put}, \texttt{hdfs dfs -get}, \texttt{hdfs dfs -ls}, \texttt{hdfs dfs -cat} ecc. \\
+		Questa infrastruttura consente di eseguire esperimenti su larga scala simulando un cluster reale, ma mantenendo la semplicità di gestione offerta da Docker.

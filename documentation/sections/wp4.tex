@@ -1,0 +1,118 @@
+\chapter{Esecuzione, JAR e Risultati}
+	
+	\section{Generazione dei JAR}
+		Per poter eseguire i programmi sviluppati in ambiente distribuito è stato necessario creare degli archivi \textbf{JAR} contenenti il bytecode Java e le dipendenze essenziali.
+		\begin{itemize}
+			\item \texttt{BMWSales.jar}: include le classi sviluppate per l’esercizio MapReduce (\texttt{DriverBMWSales}, \texttt{Mapper1}, \texttt{Mapper2}, \texttt{Mapper3}, \texttt{Combiner1}, \texttt{Reducer1}, \texttt{Reducer2}, \texttt{Reducer3}). \\
+			Viene eseguito con il comando:
+			\begin{verbatim}
+        hadoop jar BMWSales.jar mapreduce.DriverBMWSales \
+        <input> <out_1> <out_2> <out_3> [topK]
+			\end{verbatim}
+			dove \texttt{topK} indica il numero di modelli da estrarre per regione (opzionale, default = 5).
+			
+			\item \texttt{BMWSpark.jar}: contiene il driver \texttt{SparkDriver}. \\
+			È stato eseguito con:
+			\begin{verbatim}
+        spark-submit \
+        --class spark.SparkDriver \
+        --master local[*] \ # o con spark://spark-master:54310
+        --deploy-mode client \
+        --num-executors 3 \
+        --executor-memory 1G \
+        --executor-cores 1 \
+        --driver-memory 1G \
+        BMWSpark.jar <input> <output>
+			\end{verbatim}
+		\end{itemize}
+	
+	\section{Risultati MapReduce}
+		L’esecuzione del job MapReduce ha prodotto tre directory di output corrispondenti ai tre job sequenziali:
+		
+		\begin{itemize}
+			\item \texttt{bmw\_out1}: aggregazione per \texttt{(regione, modello)};
+			\item \texttt{bmw\_out2}: volumi complessivi per regione;
+			\item \texttt{bmw\_out3}: risultati finali con Top-K modelli per regione e metriche aggiuntive.
+		\end{itemize}
+		
+		\subsection*{Esempio di output parziale Job 1 (aggregazione per regione e modello)}
+			\begin{table}[H]
+				\centering
+				\begin{tabular}{l l l l l l}
+					\hline
+					\textbf{Regione} & \textbf{Modello} & \textbf{count \textbar\ sumVol \textbar\ sumPrice \textbar\ highCount}  \\
+					\hline
+					Africa                & 3 Series         & \hspace{3mm} 757 \textbar\ 3,892,595 \textbar\ 57,962,075 \textbar\ 244 \\
+					Africa                & 5 Series         & \hspace{3mm} 789 \textbar\ 4,020,702 \textbar\ 60,270,409 \textbar\ 240 \\
+					Africa                & 7 Series         & \hspace{3mm} 738 \textbar\ 3,699,471 \textbar\ 56,245,754 \textbar\ 225 \\
+					Africa                & i3               & \hspace{3mm} 783 \textbar\ 3,967,283 \textbar\ 58,288,045 \textbar\ 222 \\
+					Africa                & i8               & \hspace{3mm} 731 \textbar\ 3,586,673 \textbar\ 54,237,461 \textbar\ 211 \\
+					Africa                & M3               & \hspace{3mm} 694 \textbar\ 3,448,709 \textbar\ 52,295,352 \textbar\ 209 \\
+					\hline
+				\end{tabular}
+				\caption{Aggregazione per (regione, modello) (estratto da \texttt{bmw\_out1}).}
+				\label{tab:mr_output1}
+			\end{table}
+		
+		\subsection*{Output parziale Job 2 (totali per regione)}
+			\begin{table}[H]
+				\centering
+				\begin{tabular}{l r}
+					\hline
+					\textbf{Regione} & \textbf{Volume Totale} \\
+					\hline
+					Africa                & 41,565,252             \\
+					Asia                  & 42,974,277             \\
+					Europe                & 42,555,138             \\
+					\hline
+				\end{tabular}
+				\caption{Totali di vendita per regione (estratto da \texttt{bmw\_out2}).}
+				\label{tab:mr_output2}
+			\end{table}
+		
+		\subsection*{Output parziale Job 3 (Top-K modelli per regione)}
+			\begin{table}[H]
+				\centering
+				\begin{tabular}{l l r r r r}
+					\hline
+					\textbf{Regione} & \textbf{Modello} & \textbf{Volume} & \textbf{Share \%} & \textbf{Prezzo Medio} & \textbf{High \%} \\
+					\hline
+					Africa                & 5 Series         & 4,020,702       & 9.67              & 76,388.35             & 30.42            \\
+					Africa                & X5               & 3,972,541       & 9.55              & 73,532.00             & 30.04            \\
+					Asia                  & X3               & 4,315,210       & 10.04             & 78,120.50             & 31.15            \\
+					Asia                  & 7 Series         & 4,201,870       & 9.77              & 80,540.20             & 29.87            \\
+					\hline
+				\end{tabular}
+				\caption{Top-K modelli per regione con metriche calcolate (estratto da \texttt{bmw\_out3}).}
+				\label{tab:mr_output3}
+			\end{table}
+	
+	\section{Risultati Spark}
+		Il job Spark ha prodotto l’output nella cartella \texttt{bmw\_out\_spark}.
+		Ogni riga riporta il gruppo di età, il modello più venduto e il volume totale.
+		
+		\begin{table}[H]
+			\centering
+			\begin{tabular}{l l r}
+				\hline
+				\textbf{Fascia Età} & \textbf{Modello Top} & \textbf{Volume Totale} \\
+				\hline
+				age $\leq$ 2014         & X1                   & 8,201,854              \\
+				2015\_2018              & 7 Series             & 6,465,540              \\
+				2019\_2021              & M5                   & 4,856,286              \\
+				$\geq$ 2022             & X6                   & 5,094,533              \\
+				\hline
+			\end{tabular}
+			\caption{Output Spark: modello più venduto per gruppo di età (estratto da \texttt{bmw\_out\_spark}).}
+			\label{tab:spark_output}
+		\end{table}
+	
+	\section{Confronto}
+		Entrambi gli approcci hanno permesso di estrarre informazioni utili dal dataset, ma con differenze sostanziali:
+		
+		\begin{itemize}
+			\item \textbf{MapReduce}: pipeline più articolata, che calcola molteplici metriche e classifica i modelli per regione;
+			\item \textbf{Spark}: soluzione più concisa e performante, focalizzata sull’individuazione del modello top per fascia temporale.
+		\end{itemize}
+		
+		In sintesi, Hadoop si presta ad analisi complesse a step multipli, mentre Spark risulta più immediato e veloce per operazioni iterative e di aggregazione.

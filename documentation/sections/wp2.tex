@@ -1,0 +1,63 @@
+\chapter{Esercizio 1 -- Hadoop MapReduce}
+	L’obiettivo del primo esercizio era realizzare un programma MapReduce che analizzasse i dati del dataset \texttt{BMW\_Car\_Sales\_Classification.csv} applicando almeno tre trasformazioni.
+	Per affrontare il problema è stata progettata una \textbf{pipeline composta da tre job sequenziali}, orchestrati dal driver \texttt{DriverBMWSales}.
+	Ogni job prende in input l’output del precedente, con l’ultimo passo che produce il risultato finale richiesto.
+	
+	\section{Job 1: Aggregazione per regione e modello}
+		Il primo job ha lo scopo di aggregare i dati di vendita per \textbf{coppia (regione, modello)}.
+		
+		\begin{itemize}
+			\item \textbf{Mapper1:} legge ciascuna riga del file CSV (ignorando l’intestazione) ed emette come chiave la coppia \texttt{region-model}. \\
+			Il valore associato è una tupla codificata nel formato \texttt{1|volume|prezzo|isHigh}, dove:
+			\begin{itemize}
+				\item \texttt{1} rappresenta il conteggio di un record;
+				\item \texttt{volume} è il numero di unità vendute;
+				\item \texttt{price} è il prezzo della singola vendita;
+				\item \texttt{isHigh} vale 1 se la classificazione delle vendite è \texttt{High}, altrimenti 0.
+			\end{itemize}
+			
+			\item \textbf{Combiner1} e \textbf{Reducer1:} sommano i valori parziali generati dal mapper, producendo per ogni chiave (regione, modello) l’aggregato finale nel formato \texttt{count|sumVolume|sumPrice|highCount}.
+		\end{itemize}
+		
+		L’output di questo job è, quindi, un insieme di statistiche aggregate per modello e regione.
+	
+	\section{Job 2: Calcolo dei totali per regione}
+		Il secondo job utilizza l’output del Job 1 per calcolare i \textbf{totali complessivi delle vendite per ogni regione}.
+		
+		\begin{itemize}
+			\item \textbf{Mapper2:} estrae da ciascuna riga la regione e il valore \texttt{sumVolume};
+			\item \textbf{Reducer2:} somma tutti i valori per regione e produce come output \texttt{region - regionTotalVolume}.
+		\end{itemize}
+		
+		Questo passo fornisce i volumi totali regionali necessari per calcolare le percentuali di mercato.
+	
+	\section{Job 3: Top-K modelli per regione}
+		Il terzo job combina i risultati dei due precedenti per ottenere statistiche avanzate e selezionare i \textbf{Top-K modelli per regione}.
+		
+		\begin{itemize}
+			\item \textbf{Mapper3:} legge i dati del Job 1 e, tramite i totali regionali (caricati dall’output del Job 2), calcola per ogni modello:
+			\begin{itemize}
+				\item la quota percentuale di mercato (\texttt{share\%});
+				\item il prezzo medio (\texttt{avgPrice});
+				\item la percentuale di classificazioni alte (\texttt{highShare}).
+			\end{itemize}
+			
+			L’output del mapper ha come chiave la regione e come valore le metriche associate al modello.
+			
+			\item \textbf{Reducer3:} ordina i modelli di ciascuna regione in base al volume di vendite e ne seleziona i primi \texttt{K} (default 5). \\
+			L’output finale ha la forma:
+			\[
+				\texttt{region \quad model \quad sumVol \quad share\% \quad avgPrice \quad highShare}
+			\]
+		\end{itemize}
+	
+	\section{Sintesi della pipeline}
+		La catena di tre job realizza quindi il seguente flusso di trasformazioni:
+		
+		\begin{enumerate}
+			\item aggregazione per \texttt{(regione, modello)};
+			\item calcolo dei totali di vendita per regione;
+			\item calcolo delle metriche per modello e selezione dei Top-K.
+		\end{enumerate}
+		
+		Questa architettura permette di ottenere statistiche dettagliate sulle vendite BMW, evidenziando i modelli più rilevanti per ciascuna regione, sia in termini di quota di mercato che di prezzo medio.
